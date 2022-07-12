@@ -1,0 +1,12 @@
+name: Test Self-Hosted
+on:
+  push:
+    branches:
+      - master
+
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - run: echo 'Hello World'
