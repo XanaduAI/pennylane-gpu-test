@@ -1,0 +1,92 @@
+name: GPU Tests
+on:
+  push:
+    branches:
+      - master
+
+env:
+  COVERAGE_FLAGS: "--cov=pennylane --cov-report=term-missing --cov-report=xml --no-flaky-report -p no:warnings --tb=native"
+
+jobs:
+  gpu-tests:
+    runs-on:
+      - self-hosted
+      - ubuntu-22.04
+      - gpu
+
+    strategy:
+      max-parallel: 1
+      matrix:
+        python-version:
+          - 3.7
+          - 3.8
+          - 3.9
+          - 3.10
+
+    env:
+      TORCH_VERSION: 1.10.0+cpu
+      SUITE: gpu
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        id: setup_python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Since the self-hosted runner can be re-used. It is best to set up all package
+      # installations in a virtual environment that gets cleaned at the end of each workflow run
+      - name: Setup Python virtual environment
+        id: setup_venv
+        env:
+          VENV_NAME: venv_${{ steps.setup_python.outputs.python-version }}_${{ github.sha }}
+        run: |
+          # Clear any pre-existing venvs
+          rm -rf venv_*
+          
+          # Create new venv for this workflow_run
+          python --version
+          python -m venv ${{ env.VENV_NAME }}
+          
+          # Add the venv to PATH for subsequent steps
+          echo ${{ env.VENV_NAME }}/bin >> $GITHUB_PATH
+          
+          # Adding venv name as an output for subsequent steps to reference if needed
+          echo "::set-output name=venv_name::${{ env.VENV_NAME }}"
+
+      - name: Display Python-Path
+        run: |
+          which python
+          which pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip && pip install wheel --upgrade
+          pip install -r requirements-ci.txt --upgrade
+          pip install -r requirements-dev.txt --upgrade
+
+      - name: Install Torch
+        run: |
+          pip install torch==${{ env.TORCH_VERSION }} -f https://download.pytorch.org/whl/torch_stable.html
+
+      - name: Install PennyLane
+        run: |
+          python setup.py bdist_wheel
+          pip install dist/PennyLane*.whl
+
+      - name: Install Lightning-master
+        run: python -m pip install -i https://test.pypi.org/simple/ PennyLane-Lightning --pre --upgrade
+
+      - name: Run tests
+        run: python -m pytest tests --cov=pennylane $COVERAGE_FLAGS -m "$SUITE" -n auto
+
+      - name: Adjust coverage file for Codecov
+        run: bash <(sed -i 's/filename=\"/filename=\"pennylane\//g' coverage.xml)
+
+      - name: Cleanup
+        run: rm -rf ${{ steps.setup_venv.outputs.venv_name }}
