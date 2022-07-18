@@ -83,7 +83,7 @@ jobs:
 
       - name: Install Torch
         run: |
-          pip install torch==${{ env.TORCH_VERSION }} -f https://download.pytorch.org/whl/torch_stable.html
+          python -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 
       - name: Install PennyLane
         run: |
