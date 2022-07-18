@@ -83,7 +83,7 @@ jobs:
 
       - name: Install Torch
         run: |
-          python -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+          python -m pip install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0+cu113 --extra-index-url https://download.pytorch.org/whl/cu116
 
       - name: Install PennyLane
         run: |
@@ -99,5 +99,13 @@ jobs:
       - name: Adjust coverage file for Codecov
         run: bash <(sed -i 's/filename=\"/filename=\"pennylane\//g' coverage.xml)
 
+      # Cleans up the working directory so subsequent jobs on same runner get a clean working directory
+      # This step runs even if any of the previous steps fail
       - name: Cleanup
-        run: rm -rf ${{ steps.setup_venv.outputs.venv_name }}
+        if: always()
+        run: |
+          rm -rf ${{ steps.setup_venv.outputs.venv_name }}
+          rm -rf *
+          rm -rf .git
+          rm -rf .gitignore
+          rm -rf .github
