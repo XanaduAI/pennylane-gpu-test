@@ -7,6 +7,10 @@ on:
 env:
   COVERAGE_FLAGS: "--cov=pennylane --cov-report=term-missing --cov-report=xml --no-flaky-report -p no:warnings --tb=native"
 
+concurrency:
+  group: gpu-test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   gpu-tests:
     runs-on:
@@ -21,7 +25,7 @@ jobs:
           - 3.7
           - 3.8
           - 3.9
-          - 3.10
+          - '3.10'
 
     env:
       TORCH_VERSION: 1.10.0+cpu
