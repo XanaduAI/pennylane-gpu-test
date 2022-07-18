@@ -94,7 +94,8 @@ jobs:
         run: python -m pip install -i https://test.pypi.org/simple/ PennyLane-Lightning --pre --upgrade
 
       - name: Run tests
-        run: python -m pytest tests -m "$SUITE"
+        run: echo "hello world"
+        # run: python -m pytest tests -m "${{ env.SUITE }}"
 
       - name: Adjust coverage file for Codecov
         run: bash <(sed -i 's/filename=\"/filename=\"pennylane\//g' coverage.xml)
