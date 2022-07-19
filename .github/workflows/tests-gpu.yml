@@ -33,6 +33,7 @@ jobs:
               repo: context.repo.repo,
               pull_number: ${{ github.event.inputs.pullRequestNumber }}
             });
+            console.log(pullRequestInformation);
             console.log(pullRequestInformation.head)
             return pullRequestInformation.head;
 
