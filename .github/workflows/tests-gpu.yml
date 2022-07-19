@@ -35,7 +35,7 @@ jobs:
             });
             console.log(pullRequestInformation);
             console.log(pullRequestInformation.head)
-            return pullRequestInformation.head;
+            return pullRequestInformation.data.head;
 
       - id: repository_name
         if: github.event.inputs.pullRequestNumber != '-1' && github.event.inputs.pullRequestNumber != ''
@@ -43,7 +43,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const pullRequestInformation = ${{ steps.fetch_pull_request_source_information.outputs.result }}
+            const pullRequestInformation = ${{ fromJSON(steps.fetch_pull_request_source_information.outputs.result) }}
             return pullRequestInformation.head.repo.full_name;
 
       - id: repository_ref
