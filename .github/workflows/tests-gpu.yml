@@ -44,7 +44,7 @@ jobs:
           result-encoding: string
           script: |
             const pullRequestInformation = ${{ fromJSON(steps.fetch_pull_request_source_information.outputs.result) }}
-            return pullRequestInformation.head.repo.full_name;
+            return pullRequestInformation.repo.full_name;
 
       - id: repository_ref
         if: github.event.inputs.pullRequestNumber != '-1' && github.event.inputs.pullRequestNumber != ''
@@ -52,8 +52,8 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const pullRequestInformation = ${{ steps.fetch_pull_request_source_information.outputs.result }}
-            return pullRequestInformation.head.sha;
+            const pullRequestInformation = ${{ fromJSON(steps.fetch_pull_request_source_information.outputs.result) }}
+            return pullRequestInformation.sha;
 
     outputs:
       repository-name: ${{ steps.repository_name.outputs.result || github.repository }}
