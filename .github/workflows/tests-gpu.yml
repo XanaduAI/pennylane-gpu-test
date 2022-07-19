@@ -44,7 +44,7 @@ jobs:
           result-encoding: string
           script: |
             const pullRequestInformation = ${{ fromJSON(steps.fetch_pull_request_source_information.outputs.result) }}
-            console.log(pullRequestInformation);
+            console.log(JSON.stringify(pullRequestInformation));
             return pullRequestInformation.repo.full_name;
 
       - id: repository_ref
