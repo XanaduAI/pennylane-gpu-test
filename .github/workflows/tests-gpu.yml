@@ -33,8 +33,6 @@ jobs:
               repo: context.repo.repo,
               pull_number: ${{ github.event.inputs.pullRequestNumber }}
             });
-            console.log(pullRequestInformation);
-            console.log(pullRequestInformation.head)
             return pullRequestInformation.data.head;
 
       - id: repository_name
@@ -43,8 +41,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const pullRequestInformation = ${{ steps.fetch_pull_request_source_information.outputs.result }}
-            console.log(JSON.stringify(pullRequestInformation));
+            const pullRequestInformation = ${{ steps.fetch_pull_request_source_information.outputs.result }};
             return pullRequestInformation.repo.full_name;
 
       - id: repository_ref
@@ -58,7 +55,7 @@ jobs:
 
     outputs:
       repository-name: ${{ steps.repository_name.outputs.result || github.repository }}
-      repository-ref: ${{ steps.repository_name.outputs.result || '' }}
+      repository-ref: ${{ steps.repository_ref.outputs.result || github.ref }}
 
   gpu-tests:
     runs-on:
