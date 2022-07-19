@@ -23,7 +23,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - id: fetch_pull_request_source_information
+      - name: Get Pull Request Information
+        id: fetch_pull_request_source_information
         if: github.event.inputs.pullRequestNumber != '-1' && github.event.inputs.pullRequestNumber != ''
         uses: actions/github-script@v6
         with:
@@ -35,7 +36,8 @@ jobs:
             });
             return pullRequestInformation.data.head;
 
-      - id: repository_name
+      - name: Parse Pull Request Repository Full Name
+        id: repository_name
         if: github.event.inputs.pullRequestNumber != '-1' && github.event.inputs.pullRequestNumber != ''
         uses: actions/github-script@v6
         with:
@@ -44,7 +46,8 @@ jobs:
             const pullRequestInformation = ${{ steps.fetch_pull_request_source_information.outputs.result }};
             return pullRequestInformation.repo.full_name;
 
-      - id: repository_ref
+      - name: Parse Pull Request Repository Ref
+        id: repository_ref
         if: github.event.inputs.pullRequestNumber != '-1' && github.event.inputs.pullRequestNumber != ''
         uses: actions/github-script@v6
         with:
@@ -165,6 +168,7 @@ jobs:
         if: success() && github.event_name == 'workflow_dispatch'
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.PERSONAL_PAT_TOKEN }}
           script: |
             const repositoryFullName = "${{ needs.set-source-pennylane-repository.outputs.repository-name }}";
             const repositoryRef = "${{ needs.set-source-pennylane-repository.outputs.repository-ref }}";
