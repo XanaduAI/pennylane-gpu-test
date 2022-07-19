@@ -31,7 +31,7 @@ jobs:
             const pullRequestInformation = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: ${{ github.events.inputs.pullRequestNumber }}
+              pull_number: ${{ github.event.inputs.pullRequestNumber }}
             });
             return pullRequestInformation.head;
 
