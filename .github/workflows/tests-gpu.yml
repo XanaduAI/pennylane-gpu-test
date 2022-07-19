@@ -4,6 +4,12 @@ on:
     branches:
       - master
   workflow_dispatch:
+    inputs:
+      pullRequestNumber:
+        description: 'The pull request number for which to run the GPU unit tests on. To run on a branch instead of pull request, set the value to the default -1'
+        required: false
+        default: '-1'
+        type: string
 
 env:
   COVERAGE_FLAGS: "--cov=pennylane --cov-report=term-missing --cov-report=xml --no-flaky-report -p no:warnings --tb=native"
@@ -13,11 +19,52 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  set-source-pennylane-repository:
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: fetch_pull_request_source_information
+        if: github.event.inputs.pullRequestNumber != '-1'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pullRequestInformation = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullRequestNumber
+            });
+            return pullRequestInformation.head;
+
+      - id: repository_name
+        if: github.event.inputs.pullRequestNumber != '-1'
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            const pullRequestInformation = ${{ fromJSON(steps.fetch_pull_request_source_information.outputs.result) }}
+            return pullRequestInformation.head.repo.full_name;
+
+      - id: repository_ref
+        if: github.event.inputs.pullRequestNumber != '-1'
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            const pullRequestInformation = ${{ fromJSON(steps.fetch_pull_request_source_information.outputs.result) }}
+            return pullRequestInformation.head.sha;
+
+    outputs:
+      repository-name: ${{ steps.repository_name.outputs.result || github.repository }}
+      repository-ref: ${{ steps.repository_name.outputs.result || '' }}
+
   gpu-tests:
     runs-on:
       - self-hosted
       - ubuntu-22.04
       - gpu
+
+    needs:
+      - set-source-pennylane-repository
 
     strategy:
       max-parallel: 1
@@ -43,6 +90,8 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
         with:
+          repository: ${{ needs.set-source-pennylane-repository.outputs.repository-name }}
+          ref: ${{ needs.set-source-pennylane-repository.outputs.repository-ref }}
           fetch-depth: 1
 
       - name: Setup Python
@@ -117,10 +166,17 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            const repositoryFullName = "${{ needs.set-source-pennylane-repository.outputs.repository-name }}";
+            const repositoryRef = "${{ needs.set-source-pennylane-repository.outputs.repository-ref }}";
+            
+            const repositoryNameParts = repositoryFullName.split("/");
+            const repositoryOwner = repositoryNameParts[0];
+            const repositoryName = repositoryNameParts[1];
+            
             await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: "${{ github.sha }}",
+              owner: repositoryOwner,
+              repo: repositoryName,
+              sha: repositoryRef,
               state: "success",
               target_url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
               context: "actions/pennylane/gpu-tests"
