@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - id: fetch_pull_request_source_information
-        if: github.event.inputs.pullRequestNumber != '-1'
+        if: github.event.inputs.pullRequestNumber != '-1' && github.event.inputs.pullRequestNumber != ''
         uses: actions/github-script@v6
         with:
           script: |
@@ -36,7 +36,7 @@ jobs:
             return pullRequestInformation.head;
 
       - id: repository_name
-        if: github.event.inputs.pullRequestNumber != '-1'
+        if: github.event.inputs.pullRequestNumber != '-1' && github.event.inputs.pullRequestNumber != ''
         uses: actions/github-script@v6
         with:
           result-encoding: string
@@ -45,7 +45,7 @@ jobs:
             return pullRequestInformation.head.repo.full_name;
 
       - id: repository_ref
-        if: github.event.inputs.pullRequestNumber != '-1'
+        if: github.event.inputs.pullRequestNumber != '-1' && github.event.inputs.pullRequestNumber != ''
         uses: actions/github-script@v6
         with:
           result-encoding: string
