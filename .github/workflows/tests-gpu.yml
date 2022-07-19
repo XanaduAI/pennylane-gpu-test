@@ -178,6 +178,6 @@ jobs:
               repo: repositoryName,
               sha: repositoryRef,
               state: "success",
-              target_url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              target_url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
               context: "actions/pennylane/gpu-tests"
             });
