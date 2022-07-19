@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - master
+  pull_request_review:
+    types:
+      - submitted
   workflow_dispatch:
     inputs:
       pullRequestNumber:
@@ -21,6 +24,7 @@ concurrency:
 jobs:
   set-source-pennylane-repository:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request_review' && github.event.review.state == 'approved')
 
     steps:
       - name: Get Pull Request Information
@@ -163,25 +167,3 @@ jobs:
           rm -rf .git
           rm -rf .gitignore
           rm -rf .github
-
-      - name: Report Status
-        if: success() && github.event_name == 'workflow_dispatch'
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.PERSONAL_PAT_TOKEN }}
-          script: |
-            const repositoryFullName = "${{ needs.set-source-pennylane-repository.outputs.repository-name }}";
-            const repositoryRef = "${{ needs.set-source-pennylane-repository.outputs.repository-ref }}";
-            
-            const repositoryNameParts = repositoryFullName.split("/");
-            const repositoryOwner = repositoryNameParts[0];
-            const repositoryName = repositoryNameParts[1];
-            
-            await github.rest.repos.createCommitStatus({
-              owner: repositoryOwner,
-              repo: repositoryName,
-              sha: repositoryRef,
-              state: "success",
-              target_url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-              context: "actions/pennylane/gpu-tests"
-            });
