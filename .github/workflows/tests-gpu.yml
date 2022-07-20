@@ -24,7 +24,7 @@ jobs:
       - ubuntu-22.04
       - gpu
 
-    if: github.event_name == "push" || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'needs gpu testing'))
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'needs gpu testing'))
 
     strategy:
       max-parallel: 1
