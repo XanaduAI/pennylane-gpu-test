@@ -24,7 +24,7 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'needs gpu unittesting'))
 
     strategy:
-      max-parallel: 1
+      max-parallel: 2
       matrix:
         python-version:
           - 3.7
@@ -98,16 +98,7 @@ jobs:
         run: python -m pip install -i https://test.pypi.org/simple/ PennyLane-Lightning --pre --upgrade
 
       - name: Run tests
-        run: python -m pytest -m "${{ env.SUITE }}" ${{ env.COVERAGE_FLAGS }} tests
-
-      - name: Adjust coverage file for Codecov
-        run: bash <(sed -i 's/filename=\"/filename=\"pennylane\//g' coverage.xml)
-
-      - name: Create coverage artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: gpu-coverage-${{ steps.setup_python.outputs.python-version }}
-          path: ./coverage.xml
+        run: python -m pytest -m "${{ env.SUITE }}" tests
 
       # Cleans up the working directory so subsequent jobs on same runner get a clean working directory
       # This step runs even if any of the previous steps fail
