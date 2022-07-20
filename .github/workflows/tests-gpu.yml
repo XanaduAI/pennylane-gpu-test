@@ -26,9 +26,6 @@ jobs:
 
     if: contains(github.event.pull_request.labels.*.name, 'needs gpu testing')
 
-    needs:
-      - set-source-pennylane-repository
-
     strategy:
       max-parallel: 1
       matrix:
