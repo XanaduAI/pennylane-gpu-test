@@ -213,7 +213,7 @@ class TestApply:
         state = torch.tensor([-1.0 + 1j, 1.0 + 1j], dtype=torch.complex128, device=torch_device)
         assert torch.allclose(
             dev._conj(state),
-            torch.tensor([-1.0 - 1j, 1.0 - 1j], dtype=torch.complex128),
+            torch.tensor([-1.0 - 1j, 1.0 - 1j], dtype=torch.complex128, device=torch_device),
             atol=tol,
             rtol=0,
         )
