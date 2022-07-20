@@ -3,16 +3,12 @@ on:
   push:
     branches:
       - master
-  pull_request_review:
+  pull_request:
     types:
-      - submitted
-  workflow_dispatch:
-    inputs:
-      pullRequestNumber:
-        description: 'The pull request number for which to run the GPU unit tests on. To run on a branch instead of pull request, select the branch in question and set the value to the default -1'
-        required: false
-        default: '-1'
-        type: string
+      - opened
+      - reopened
+      - labeled
+      - synchronize
 
 env:
   COVERAGE_FLAGS: "--cov=pennylane --cov-report=term-missing --cov-report=xml --no-flaky-report -p no:warnings --tb=native"
@@ -22,53 +18,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  set-source-pennylane-repository:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request_review' && github.event.review.state == 'approved')
-
-    steps:
-      - name: Get Pull Request Information
-        id: fetch_pull_request_source_information
-        if: github.event.inputs.pullRequestNumber != '-1' && github.event.inputs.pullRequestNumber != ''
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const pullRequestInformation = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: ${{ github.event.inputs.pullRequestNumber }}
-            });
-            return pullRequestInformation.data.head;
-
-      - name: Parse Pull Request Repository Full Name
-        id: repository_name
-        if: github.event.inputs.pullRequestNumber != '-1' && github.event.inputs.pullRequestNumber != ''
-        uses: actions/github-script@v6
-        with:
-          result-encoding: string
-          script: |
-            const pullRequestInformation = ${{ steps.fetch_pull_request_source_information.outputs.result }};
-            return pullRequestInformation.repo.full_name;
-
-      - name: Parse Pull Request Repository Ref
-        id: repository_ref
-        if: github.event.inputs.pullRequestNumber != '-1' && github.event.inputs.pullRequestNumber != ''
-        uses: actions/github-script@v6
-        with:
-          result-encoding: string
-          script: |
-            const pullRequestInformation = ${{ steps.fetch_pull_request_source_information.outputs.result }}
-            return pullRequestInformation.sha;
-
-    outputs:
-      repository-name: ${{ steps.repository_name.outputs.result || github.repository }}
-      repository-ref: ${{ steps.repository_ref.outputs.result || github.ref }}
-
   gpu-tests:
     runs-on:
       - self-hosted
       - ubuntu-22.04
       - gpu
+
+    if: contains(github.event.pull_request.labels.*.name, 'needs gpu testing')
 
     needs:
       - set-source-pennylane-repository
@@ -96,8 +52,6 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
         with:
-          repository: ${{ needs.set-source-pennylane-repository.outputs.repository-name }}
-          ref: ${{ needs.set-source-pennylane-repository.outputs.repository-ref }}
           fetch-depth: 1
 
       - name: Setup Python
@@ -172,14 +126,14 @@ jobs:
           rm -rf .gitignore
           rm -rf .github
 
-  upload-to-codecov:
-    runs-on: ubuntu-latest
-
-    needs:
-      - gpu-tests
-
-    steps:
-      - name: Download reports from GPU tests
-        uses: actions/download-artifact@v3
-      - name: Upload to Codecov
-        uses: codecov/codecov-action@v3
+#  upload-to-codecov:
+#    runs-on: ubuntu-latest
+#
+#    needs:
+#      - gpu-tests
+#
+#    steps:
+#      - name: Download reports from GPU tests
+#        uses: actions/download-artifact@v3
+#      - name: Upload to Codecov
+#        uses: codecov/codecov-action@v3
